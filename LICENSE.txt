@@ -1,4 +1,4 @@
-Copyright (c) 2014 Mike Owens
+Copyright (c) 2014 Mike Owens <mike@filespanker.com>
 
 MIT License
 

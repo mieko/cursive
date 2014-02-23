@@ -1,6 +1,8 @@
 # Cursive
 
-TODO: Write a gem description
+Cursive is a declarative CSV rails responder, inspired by
+ActiveModel::Serializers.  Complex models sometimes need features that a simple
+to_csv can't handle, and shouldn't clutter up your models.
 
 ## Installation
 
@@ -18,7 +20,41 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+
+# app/controllers/locations_controller.rb
+
+class LocationsController < ApplicationController
+  respond_to :csv, :json
+
+  def index
+    @locations = Location.all
+    respond_with @locations
+  end
+end
+
+
+# app/serializers/cursive/locations_csv_serializer.rb
+
+class LocationsCursiveSerializer < Cursive::Serializer
+  render_header false
+
+  attribute :id
+  attribute :href, name: "location"
+
+  def href
+    polymorphic_path(object)
+  end
+end
+
+
+```
+
+## The Name
+
+```bash
+< /usr/share/dict/words tr A-Z a-z | grep '^c.*s.*v.*' | sort | uniq | less
+```
 
 ## Contributing
 
