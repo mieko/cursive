@@ -37,7 +37,7 @@ class TestCursive < TestBase
       attribute :station
       attribute :rank
 
-      cls.send(:define_method, :default_value) do
+      cls.send(:define_method, :default_value) do |object, attr_name|
         'SERIALIZER_NONE'
       end
     end
@@ -61,7 +61,7 @@ class TestCursive < TestBase
       attribute :station, default: 'ATTRIBUTE_NONE'
       attribute :rank
 
-      cls.send(:define_method, :default_value) do
+      cls.send(:define_method, :default_value) do |object, attr_name|
         'SERIALIZER_NONE'
       end
     end
@@ -77,6 +77,25 @@ class TestCursive < TestBase
     end
   end
 
+  def test_serializer_inherited_attributes
+    supc = define_serializer do
+      attribute :name
+    end
+
+    subc = define_serializer(supc) do
+      attribute :rank, default: 'none'
+    end
+
+    valid = [
+      %w(Data ltc),
+      %w(Q none),
+      %w(Quark none)
+    ]
+
+    subc.render(small_user_table).zip(valid).each do |got, expected|
+      assert_equal expected, got
+    end
+  end
 
 
 end

@@ -27,8 +27,8 @@ class TestBase < Minitest::Test
 
   # Gives us a nice way to define a serializer which can be created within
   # test methods.
-  def define_serializer(&block)
-    Class.new(Cursive::Serializer).tap do |serializer|
+  def define_serializer(super_class = Cursive::Serializer, &block)
+    Class.new(super_class).tap do |serializer|
       serializer.instance_exec(serializer, &block)
     end
   end

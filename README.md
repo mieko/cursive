@@ -1,5 +1,8 @@
 # Cursive
 
+NOTE: This gem is non-functional at the moment: An existing codebase is being
+extracted into it.
+
 Cursive is a declarative CSV rails responder, inspired by
 ActiveModel::Serializers.  Complex models sometimes need features that a simple
 to_csv can't handle, and shouldn't clutter up your models.
@@ -34,16 +37,25 @@ class LocationsController < ApplicationController
 end
 
 
-# app/serializers/cursive/locations_csv_serializer.rb
+# app/serializers/cursive/locations_cursive_serializer.rb
 
 class LocationsCursiveSerializer < Cursive::Serializer
-  render_header false
-
   attribute :id
-  attribute :href, name: "location"
+  attribute :href
+  attribute :status, default: 'NORMAL'
 
+  # Serializer methods take precedence over model methods
   def href
     polymorphic_path(object)
+  end
+
+  # By default, we render a header.  Turn that off.
+  def render_header?
+    false
+  end
+
+  def default_value(object, attribute)
+    return 'NONE'
   end
 end
 
@@ -58,7 +70,7 @@ end
 
 ## Contributing
 
-1. Fork it ( http://github.com/<my-github-username>/cursive/fork )
+1. Fork it ( http://github.com/mieko/cursive/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

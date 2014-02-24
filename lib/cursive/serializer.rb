@@ -3,17 +3,27 @@ require 'cursive/attribute'
 module Cursive
   class Serializer
     class << self
+
+      # When a Serializer is inherited, copy its state into the subclass
+      def inherited(cls)
+        parent_attributes = instance_variable_get(:@attributes) || []
+        cls.instance_variable_set(:@attributes, parent_attributes.dup)
+
+        super
+      end
+
       def attributes
         @attributes ||= []
         @attributes
       end
 
+      # defines an attribute
       def attribute(*args, **kwargs)
         attributes.push(Attribute.new(*args, **kwargs))
       end
 
       def render(collection)
-        new.render(collection)
+        new(collection).render
       end
     end
 
@@ -21,28 +31,34 @@ module Cursive
       true
     end
 
-    def default_value
+    def default_value(object, attribute_name)
       ''
     end
 
-    def render_header
-      self.class.attributes.map do |attribute|
-        attribute.name
-      end
+    def initialize(collection)
+      @collection = collection
     end
 
-    def call_with_object(method_name, object)
-      m = method(method_name)
-      (m.arity.abs == 1) ? m.call(object) : m.call
-    end
-
-    def render(collection)
-      return enum_for(__method__, collection) unless block_given?
+    def render
+      return enum_for(__method__) unless block_given?
 
       render_header if render_header?
 
-      collection.each do |item|
+      @collection.each do |item|
         yield render_one(item)
+      end
+    end
+
+    def render_text
+      render.to_a.each do |record|
+        record.join ","
+      end.join "\n"
+    end
+
+    private
+    def render_header
+      self.class.attributes.map do |attribute|
+        attribute.name
       end
     end
 
@@ -57,14 +73,21 @@ module Cursive
     end
 
     def value_for_attribute(attribute, object)
-      [self, object].each do |target|
-        if target.respond_to?(attribute.method_name)
-          rval = target.send(attribute.method_name)
-          return rval unless rval.nil?
-        end
+      # First, try the serializer, with self.attr_name(obj)
+      if respond_to?(attribute.method_name)
+        rval = send(attribute.method_name, object)
+        return rval unless rval.nil?
       end
 
-      return attribute.default || call_with_object(:default_value, object)
+      # Then try the model, with object.attr_name
+      if object.respond_to?(attribute.method_name)
+        rval = object.send(attribute.method_name)
+        return rval unless rval.nil?
+      end
+
+      # Then try the attribute default specified, and finally, give
+      # serializer.default_value(object, attr_name) a chance to answer.
+      return attribute.default || default_value(object, attribute.name)
     end
 
   end
